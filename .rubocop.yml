@@ -1,0 +1,30 @@
+AllCops:
+  TargetRubyVersion: 2.7
+  NewCops: enable
+
+# Prefer to use single quotes to help with speed where possible. Every bit helps!
+Style/StringLiterals:
+  Enabled: true
+  EnforcedStyle: single_quotes
+
+Style/StringLiteralsInInterpolation:
+  Enabled: true
+  EnforcedStyle: single_quotes
+
+Layout/LineLength:
+  Max: 120
+
+# Because of the type of system we're implementing, it's hard to
+# meet the recommended metrics for complexity & method length etc.
+# So for now I'm disabling them, I might revisit this in the future.
+Metrics:
+  Enabled: false
+
+Naming/MethodParameterName:
+  Enabled: false
+
+Naming/VariableNumber:
+  Enabled: false
+
+Lint/AmbiguousOperatorPrecedence:
+  Enabled: false
