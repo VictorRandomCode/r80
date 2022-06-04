@@ -43,10 +43,18 @@ class MemoryTest < Minitest::Test
     assert_equal(0xab, @memory.get_byte(0x1001))
   end
 
+  def test_array_set_get
+    # Set a known pattern into a portion of memory
+    bytes1 = [0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57].pack('c*')
+    @memory[0x2000, bytes1.size] = bytes1
+    # Read back a subset of it and check it is what it should be
+    bytes2 = @memory[0x2002, 3]
+    assert_equal([0x52, 0x53, 0x54].pack('c*'), bytes2)
+  end
+
   def test_dump
-    # We don't check the exact details of the dump output, just
-    # that it looks to be of plausible size and it hasn't caused
-    # an exception to be thrown
+    # We don't check the exact details of the dump output, just that it looks
+    # to be of plausible size and it hasn't caused an exception to be thrown
     s = @memory.dump_to_string(0x0100, 64)
     line_count = s.split("\n").size
     assert_equal(4, line_count)

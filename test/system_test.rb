@@ -1065,12 +1065,6 @@ class SystemTest < Minitest::Test
 
   # Helper to load an array of bytes into RAM starting at 0x0100
   def load_ram(bytes)
-    location = 0x0100
-    bytes.each do |b|
-      raise 'Bad test data' unless b < 0x100
-
-      @system.memory.set_byte(location, b)
-      location += 1
-    end
+    @system.memory[0x0100, bytes.size] = bytes.pack('c*')
   end
 end
