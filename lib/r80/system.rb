@@ -20,6 +20,7 @@ module R80
     attr_reader :running, :registers, :memory # To help with unit tests
 
     def initialize(ram_size, initial_pc, cpm_stub: false)
+      @starting = true
       @running = true
       @memory = Memory.new(ram_size)
       @registers = Registers.new(initial_pc)
@@ -112,11 +113,12 @@ module R80
 
     # Executes the next instruction (currently pointed at by PC)
     def execute_instruction
-      # By definition, a jump (or call or etc) to address zero is termination
-      if @registers.pc.zero?
+      # By definition, a jump (or call or etc) to address zero is termination (unless we're starting there)
+      if @registers.pc.zero? && !@starting
         @running = false
         return
       end
+      @starting = false
 
       # Collate any DD/FD prefix sequence
       @prefix = Prefix::NONE
