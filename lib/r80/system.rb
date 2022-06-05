@@ -19,7 +19,7 @@ module R80
   class System
     attr_reader :running, :registers, :memory # To help with unit tests
 
-    def initialize(ram_size, initial_pc)
+    def initialize(ram_size, initial_pc, cpm_stub: false)
       @running = true
       @memory = Memory.new(ram_size)
       @registers = Registers.new(initial_pc)
@@ -90,10 +90,16 @@ module R80
                                      Prefix::DD => @sym_from_register_bitmask_p,
                                      Prefix::FD => @sym_from_register_bitmask_q }
 
-      # Set a stub for CP/M calls; simply returns from whence it came
-      # This is so that zexall.com can be used as a test case
-      @memory.set_byte(0x0005, 0xC9) # ret
-      @memory.set_word(0x0006, 0xE406) # Some binaries use this to work out where a stack can be placed
+      # This emulation supports a very minimal CP/M BDOS, only sufficient for running ZEXALL.COM
+      if cpm_stub
+        @cpm_stub = cpm_stub
+        # Set a stub for CP/M calls; simply returns from whence it came
+        # This is so that zexall.com can be used as a test case
+        @memory.set_byte(0x0005, 0xC9) # ret
+        @memory.set_word(0x0006, 0xE406) # Some binaries use this to work out where a stack can be placed
+      else
+        @cpm_stub = false
+      end
     end
 
     # Load the specified binary file into memory at the specified offset
@@ -553,8 +559,8 @@ module R80
     end
 
     def op_ret
-      # Intercept a return from a stub BDOS call
-      if @registers.pc == 0x0006
+      if (@registers.pc == 0x0006) && @cpm_stub
+        # Intercept a return from a stub BDOS call
         value = pop_word
         # Handle a minimal CP/M call in Ruby instead of properly implementing BDOS/BIOS
         case @registers.c
@@ -1195,7 +1201,7 @@ module R80
         # ld (ix+d),r2 or ld (iy+d),r2
         offset = next_byte
         reg1 = @prefix_to_regsym[@prefix]
-        value2 = get_register_value_via_bitmask(r2, true)
+        value2 = get_register_value_via_bitmask(r2, ignore_prefix: true)
         location = (@registers.get(reg1) + offset) & 0xFFFF
         @memory.set_byte(location, value2)
       elsif r2 == 0x06
@@ -1389,7 +1395,7 @@ module R80
 
     # Return the value in a byte register based on a 3-bit bitmask.
     # Used by (eg) "sub r" where r is a bitmask indicating the source register
-    def get_register_value_via_bitmask(bitmask, ignore_prefix = false)
+    def get_register_value_via_bitmask(bitmask, ignore_prefix: false)
       prefix = ignore_prefix ? 0 : @prefix
       case bitmask
       when 0x00 then @registers.b

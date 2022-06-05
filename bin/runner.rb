@@ -13,7 +13,9 @@ limit = 0
 limit = ARGV[1].to_i if ARGV.size > 1
 
 # Initialise the simulated system
-sys = R80::System.new(0x10000, 0x0100)
+# TODO: Currently, this always enables the CP/M stub (so that ZEXALL.COM can work),
+# this should instead be optional behaviour controlled by a command-line switch.
+sys = R80::System.new(0x10000, 0x0100, cpm_stub: true)
 
 # Load the specified binary into memory starting at 0x0100
 sys.load_binary(0x0100, ARGV[0])
